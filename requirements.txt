@@ -1,0 +1,7 @@
+
+django
+djangorestframework
+python-dotenv
+pillow
+reportlab
+requests
