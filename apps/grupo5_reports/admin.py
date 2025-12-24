@@ -1,6 +1,9 @@
 from django.contrib import admin
-from .models import AuditLog
+from .models import MedicalReport
 
-@admin.register(AuditLog)
-class AuditLogAdmin(admin.ModelAdmin):
-    list_display = ("action", "endpoint", "user", "created_at")
+
+@admin.register(MedicalReport)
+class MedicalReportAdmin(admin.ModelAdmin):
+    list_display = ("id", "patient", "created_at")
+    list_filter = ("created_at",)
+    search_fields = ("patient__username",)

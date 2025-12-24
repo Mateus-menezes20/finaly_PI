@@ -1,17 +1,22 @@
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
 
 # =========================
-# TELA HTML (GET)
+# TELA HTML - LOGIN
 # =========================
 def login_page(request):
-    """
-    Renderiza a página de login (HTML)
-    """
     return render(request, "grupo2_auth/login.html")
+
+
+# =========================
+# TELA HTML - REGISTER
+# =========================
+def register_page(request):
+    return render(request, "grupo2_auth/register.html")
 
 
 # =========================
@@ -37,7 +42,46 @@ def login_view(request):
 
         return JsonResponse({"error": "Credenciais inválidas"}, status=401)
 
-    # 👇 mantém comportamento correto para API
+    return JsonResponse(
+        {"error": "Método não permitido. Use POST."},
+        status=405
+    )
+
+
+# =========================
+# API DE REGISTRO (POST)
+# =========================
+@csrf_exempt
+def register_view(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        if not username or not password:
+            return JsonResponse(
+                {"error": "Usuário e senha são obrigatórios"},
+                status=400
+            )
+
+        if User.objects.filter(username=username).exists():
+            return JsonResponse(
+                {"error": "Usuário já existe"},
+                status=400
+            )
+
+        user = User.objects.create_user(
+            username=username,
+            password=password
+        )
+
+        return JsonResponse(
+            {
+                "message": "Usuário criado com sucesso",
+                "user_id": user.id
+            },
+            status=201
+        )
+
     return JsonResponse(
         {"error": "Método não permitido. Use POST."},
         status=405

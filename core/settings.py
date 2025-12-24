@@ -1,9 +1,17 @@
-from pathlib import Path
-import os
 from dotenv import load_dotenv
+import os
+from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# 🔥 CARREGA O .env
 load_dotenv(BASE_DIR / ".env")
+
+# 🔑 GEMINI
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+
+
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret")
 DEBUG = True
@@ -34,9 +42,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
 
-    # Middleware de login
     "apps.grupo2_auth.middleware.LoginRequiredMiddleware",
 ]
+
 
 ROOT_URLCONF = "core.urls"
 
@@ -74,3 +82,4 @@ CACHES = {
 STATIC_URL = "/static/"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+

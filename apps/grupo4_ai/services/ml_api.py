@@ -1,30 +1,62 @@
-import requests
-import time
+import json
+import re
+import google.generativeai as genai
+from django.conf import settings
+
+genai.configure(api_key=settings.GEMINI_API_KEY)
+
+model = genai.GenerativeModel("gemini-flash-latest")
 
 
 class MLApiClient:
-    BASE_URL = "http://localhost:5000/predict"  # ajuste se necessário
-    TIMEOUT = 5
-    RETRIES = 3
 
-    @classmethod
-    def predict(cls, image_url):
-        for attempt in range(cls.RETRIES):
-            try:
-                response = requests.post(
-                    cls.BASE_URL,
-                    json={"image_url": image_url},
-                    timeout=cls.TIMEOUT
-                )
-                response.raise_for_status()
-                return response.json()
+    @staticmethod
+    def _extract_json(text: str) -> dict:
+        match = re.search(r"\{[\s\S]*\}", text)
+        if not match:
+            return {
+                "resumo": "Relatório indisponível.",
+                "achados_visuais": {},
+                "nivel_de_risco": "indefinido",
+                "recomendacoes": ["Reenvie a imagem para nova análise."],
+                "aviso_legal": "Este relatório não substitui avaliação médica profissional."
+            }
 
-            except requests.RequestException as e:
-                if attempt == cls.RETRIES - 1:
-                    raise Exception(f"Erro na API de ML: {str(e)}")
-                time.sleep(1)
+        try:
+            return json.loads(match.group())
+        except Exception:
+            return {
+                "resumo": "Erro ao interpretar o relatório.",
+                "achados_visuais": {},
+                "nivel_de_risco": "indefinido",
+                "recomendacoes": ["Erro interno na análise automática."],
+                "aviso_legal": "Este relatório não substitui avaliação médica profissional."
+            }
+
+    @staticmethod
+    def predict(image_url: str) -> dict:
+        prompt = """
+Você é uma inteligência artificial de apoio à área médica.
+
+Analise a imagem fornecida e gere um RELATÓRIO EM JSON com a seguinte estrutura:
+
+{
+  "resumo": "...",
+  "achados_visuais": {...},
+  "nivel_de_risco": "baixo | medio | alto",
+  "recomendacoes": [...],
+  "aviso_legal": "..."
+}
+
+Regras:
+- NÃO faça diagnóstico definitivo
+- NÃO cite doenças específicas
+- Linguagem técnica, ética e objetiva
+"""
+
+        response = model.generate_content([prompt, image_url])
+        return MLApiClient._extract_json(response.text)
 
 
-# 🔥 FUNÇÃO QUE O GRUPO 6 ESPERA
 def analyze(image_url):
     return MLApiClient.predict(image_url)

@@ -1,16 +1,25 @@
 from django.db import models
-from django.conf import settings
+from apps.grupo3_images.models import UploadedImage
+from apps.grupo2_auth.models import User
 
-class AuditLog(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
+
+class MedicalReport(models.Model):
+    patient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="medical_reports"
     )
-    action = models.CharField(max_length=255)
-    endpoint = models.CharField(max_length=255)
+
+    image = models.ForeignKey(
+        UploadedImage,
+        on_delete=models.CASCADE,
+        related_name="reports"
+    )
+
+    report_json = models.JSONField()
+    report_pdf = models.FileField(upload_to="reports/pdfs/")
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.action} - {self.created_at}"
+        return f"Relatório #{self.id} - {self.patient}"
